@@ -2,6 +2,7 @@
 const net = require('net');
 const fs = require('fs');
 const crypto = require('crypto');
+const path = require('path');
 
 
 const connect = {host: "127.0.0.1", port: 3001};
@@ -91,8 +92,14 @@ const server = net.createServer(function (client) {
         //REMOTE
         client.on('data',function (data) {
            if(Clients[client.id] === 'REMOTE' && data !== 'REMOTE') {
-                let datas = data.toString().split('####');
-
+                let dates = data.toString().split('####');
+                console.log(dates);
+                switch (dates[0]){
+                    case 'COPY': createFileStream(dates[1],dates[2]); break;
+                    case 'ENCODE' : createFileStream(dates[1],dates[2],crypto.createCipher(forCrypto,dates[3])); break;
+                    case 'DECODE' : createFileStream(dates[1],dates[2],crypto.createDecipher(forCrypto,dates[3])); break;
+                    default: console.log('TYPE is not default!'); break;
+                }
            }
         });
         client.on('end', function () {
@@ -138,6 +145,12 @@ function createFile(id) {
     buffName[id] = [];
 }
 //for REMOTE
-function copy() {
-    
+function createFileStream(pathOf, pathIn,key) {
+    let nameFile = path.basename(pathOf);
+    const input = fs.createReadStream(pathOf);
+    const output = fs.createWriteStream(pathIn+'\\'+nameFile);
+    if(key)
+        input.pipe(key).pipe(output);
+    else
+        input.pipe(output);
 }
